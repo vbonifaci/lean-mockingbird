@@ -201,7 +201,7 @@ theorem thm24_5_1 (Z σ P : Bird) :
   hS, hS, hK, hS, hS, hK, hS, hK, hS, hS, hK, hK, hK, hK]
 
 
--- Addition bird
+-- Existence of an addition bird
 theorem thm24_5_2 :
     ∃ PlusBird : Bird, ∀ n m : Nat,
     PlusBird * NumberBird n * NumberBird m = NumberBird (n + m) := by
@@ -237,8 +237,78 @@ theorem thm24_5_2 :
 
 
 
+#eval var_eliminate "Times" (var_eliminate "n" (var_eliminate "m" (
+  "Z" * "m" * "0" * ("Plus" * ("Times" * "n" * ("P" * "m")) * "n")
+)))
+-- prints:
+/-
+S * (K * (S * (K * (S * (S * Z * (K * n0))))))
+    * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+    * (S * (K * (S * (K * (S * (K * PlusBird)))))
+    * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+    * (S * (K * K)))) * (K * (K * P)))))) * (K * K))
+-/
+
+-- Multiplication bird - preparatory lemma
+theorem thm24_6_1 (Z n0 P PlusBird : Bird) :
+    ∃ TimesBird : Bird, ∀ n m : Nat,
+    TimesBird * NumberBird n * NumberBird m =
+    Z * (NumberBird m) * (n0) *
+    (PlusBird * (TimesBird * (NumberBird n) * (P * (NumberBird m)))
+    * NumberBird n) := by
+  let K := forest.K; let hK := forest.hK
+  let S := forest.S; let hS := forest.hS
+  let Θ := forest.Θ; let hΘ := forest.hΘ
+  let A₁ :=   S * (K * (S * (K * (S * (S * Z * (K * n0))))))
+    * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+    * (S * (K * (S * (K * (S * (K * PlusBird)))))
+    * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+    * (S * (K * K)))) * (K * (K * P)))))) * (K * K))
+  use Θ * A₁
+  intro n m
+  rw [SageBird] at hΘ
+  specialize hΘ A₁ (Θ * A₁) rfl
+  rw [FondOf] at hΘ
+  nth_rw 1 [← hΘ]
+  dsimp [A₁]
+  nth_rw 1 [hS, hK, hS, hK, hS, hS, hK, hS, hK, hS, hK, hS, hS, hK, hS, hK, hS, hS, hK, hS,
+    hK, hS, hK, hS, hS, hK, hS, hS, hK, hS, hK, hS, hS, hK, hK, hK, hK, hK]
 
 
+-- Existence of a multiplication bird
+theorem thm24_6_2 :
+    ∃ TimesBird : Bird, ∀ n m : Nat,
+    TimesBird * NumberBird n * NumberBird m = NumberBird (n * m) := by
+  obtain ⟨P, hP⟩ := @thm24_2 Bird forest
+  obtain ⟨Z, hZ⟩ := @thm24_3 Bird forest
+  obtain ⟨PlusBird, hPlusBird⟩ := @thm24_5_2 Bird forest
+  obtain ⟨TimesBird, hTimesBird⟩ := @thm24_6_1 Bird forest Z (NumberBird 0) P PlusBird
+  use TimesBird
+  intro n m
+  induction m with
+  | zero =>
+    rw [Nat.mul_zero]
+    specialize hTimesBird n 0
+    have h1 : Z * NumberBird 0 = t := by
+      apply (hZ 0).1
+      rfl
+    rw [hTimesBird, h1, ht']
+  | succ m ih =>
+    specialize hTimesBird n (m + 1)
+    rw [hTimesBird]
+    have h1 : Z * NumberBird (m + 1) = f := by
+      apply (hZ (m + 1)).2
+      rw [Nat.add_one]
+      omega
+    rw [h1, hf']
+    have h2 : (TimesBird * NumberBird n * (P * NumberBird (m + 1))) = NumberBird (n * m) := by
+      rw [← thm24_successor, hP]
+      exact ih
+    rw [h2]
+    rw [hPlusBird (n * m) n]
+    have h3 : n * m + n = n * (m + 1) := by
+      linarith
+    rw [h3]
 
 
 

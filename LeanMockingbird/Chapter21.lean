@@ -125,7 +125,7 @@ theorem thm21_2
   obtain ⟨Θ, hΘ⟩ := thm13_4 B M W hB hM hW
   -- A₁xyz = (z(yx))(yxz)
   --let A₁ : Bird := S * (S * (K * S) * (S * (K * (S * (K * S)))
-  -- * (S * (K * (S * (K * T))) * T))) * T
+  -- * (S * (K * (S * (K * T))) * T))) * T -- alternative manual solution
   let A₁ : Bird := S * (S * (K * S) * (S * (K * (S * (K * S))) --
   * (S * (K * (S * (K * (S * I)))) * (S * (K * (S * (K * K))) --
   * (S * (K * (S * I)) * K))))) * (S * (K * (S * I)) * K)
