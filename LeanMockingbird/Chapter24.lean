@@ -311,15 +311,366 @@ theorem thm24_6_2 :
     rw [h3]
 
 
+#eval var_eliminate "Exp" (var_eliminate "n" (var_eliminate "m" (
+  "Z" * "m" * "1" * ("Times" * ("Exp" * "n" * ("P" * "m")) * "n")
+)))
+-- prints:
+/-
+  S * (K * (S * (K * (S * (S * Z * (K * 1))))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+  * (S * (K * (S * (K * (S * (K * Times)))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+  * (S * (K * K)))) * (K * (K * P)))))) * (K * K))
+-/
+
+-- Exponentiating bird - preparatory lemma
+theorem thm24_7_1 (Z n1 P TimesBird : Bird) :
+    ∃ ExpBird : Bird, ∀ n m : Nat,
+    ExpBird * NumberBird n * NumberBird m =
+    Z * (NumberBird m) * (n1) *
+    (TimesBird * (ExpBird * (NumberBird n) * (P * (NumberBird m)))
+    * NumberBird n) := by
+  let K := forest.K; let hK := forest.hK
+  let S := forest.S; let hS := forest.hS
+  let Θ := forest.Θ; let hΘ := forest.hΘ
+  let A₁ := S * (K * (S * (K * (S * (S * Z * (K * n1))))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+  * (S * (K * (S * (K * (S * (K * TimesBird)))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+  * (S * (K * K)))) * (K * (K * P)))))) * (K * K))
+  use Θ * A₁
+  intro n m
+  rw [SageBird] at hΘ
+  specialize hΘ A₁ (Θ * A₁) rfl
+  rw [FondOf] at hΘ
+  nth_rw 1 [← hΘ]
+  dsimp [A₁]
+  nth_rw 1 [hS, hK, hS, hK, hS, hS, hK, hS, hK, hS, hK, hS, hS, hK, hS, hK, hS, hS, hK, hS,
+    hK, hS, hK, hS, hS, hK, hS, hS, hK, hS, hK, hS, hS, hK, hK, hK, hK, hK]
+
+-- Existence of an exponentiating bird
+theorem thm24_7_2 :
+    ∃ ExpBird : Bird, ∀ n m : Nat,
+    ExpBird * NumberBird n * NumberBird m = NumberBird (n ^ m) := by
+  obtain ⟨P, hP⟩ := @thm24_2 Bird forest
+  obtain ⟨Z, hZ⟩ := @thm24_3 Bird forest
+  obtain ⟨TimesBird, hTimesBird⟩ := @thm24_6_2 Bird forest
+  obtain ⟨ExpBird, hExpBird⟩ := @thm24_7_1 Bird forest Z (NumberBird 1) P TimesBird
+  use ExpBird
+  intro n m
+  induction m with
+  | zero =>
+    rw [Nat.pow_zero]
+    specialize hExpBird n 0
+    have h1 : Z * NumberBird 0 = t := by
+      apply (hZ 0).1
+      rfl
+    rw [hExpBird, h1, ht']
+  | succ m ih =>
+    specialize hExpBird n (m + 1)
+    rw [hExpBird]
+    have h1 : Z * NumberBird (m + 1) = f := by
+      apply (hZ (m + 1)).2
+      rw [Nat.add_one]
+      omega
+    rw [h1, hf']
+    have h2 : (ExpBird * NumberBird n * (P * NumberBird (m + 1))) = NumberBird (n ^ m) := by
+      rw [← thm24_successor, hP]
+      exact ih
+    rw [h2]
+    rw [hTimesBird (n ^ m) n]
+    have h3 : n ^ m * n = n ^ (m + 1) := by
+      exact rfl
+    rw [h3]
+
+
+#eval var_eliminate "A" (var_eliminate "n" (
+  "Z" * "n" * "t" * ("𝓝" * ("A" * ("P" * "n")))
+))
+-- prints:
+/-
+  S * (K * (S * (S * Z * (K * t))))
+  * (S * (K * (S * (K * 𝓝)))
+  * (S * (S * (K * S) * K) * (K * P)))
+-/
+
+-- Even property bird - preparatory lemma
+theorem thm24_8_1 (Z P t 𝓝 : Bird) :
+    ∃ A : Bird, ∀ n : Nat,
+    A * NumberBird n =
+    Z * (NumberBird n) * (t) *
+    (𝓝 * (A * (P * (NumberBird n)))) := by
+  let K := forest.K; let hK := forest.hK
+  let S := forest.S; let hS := forest.hS
+  let Θ := forest.Θ; let hΘ := forest.hΘ
+  let A₁ := S * (K * (S * (S * Z * (K * t))))
+  * (S * (K * (S * (K * 𝓝)))
+  * (S * (S * (K * S) * K) * (K * P)))
+  use Θ * A₁
+  intro n
+  rw [SageBird] at hΘ
+  specialize hΘ A₁ (Θ * A₁) rfl
+  rw [FondOf] at hΘ
+  nth_rw 1 [← hΘ]
+  dsimp [A₁]
+  nth_rw 1 [hS, hK, hS, hS, hK, hS, hK, hS, hK, hS, hS, hK, hS, hK,
+    hK]
+
+-- Existence of an Even property bird
+theorem thm24_8_2 :
+    ∃ EvenBird : Bird, ∀ n : Nat,
+    EvenBird * NumberBird n = (if n % 2 = 0 then t else f) := by
+  obtain ⟨P, hP⟩ := @thm24_2 Bird forest
+  obtain ⟨Z, hZ⟩ := @thm24_3 Bird forest
+  obtain ⟨𝓝, h𝓝⟩ := @thm23_1 Bird forest
+  obtain ⟨EvenBird, hEvenBird⟩ := @thm24_8_1 Bird forest Z P t 𝓝
+  use EvenBird
+  intro n
+  induction n with
+  | zero =>
+    have h1 : Z * NumberBird 0 = t := by
+      apply (hZ 0).1
+      rfl
+    rw [hEvenBird, h1, ht']
+    simp
+  | succ n ih =>
+    specialize hEvenBird (n + 1)
+    rw [hEvenBird]
+    have h1 : Z * NumberBird (n + 1) = f := by
+      apply (hZ (n + 1)).2
+      rw [Nat.add_one]
+      omega
+    rw [h1, hf']
+    have h2 : ((P * NumberBird (n + 1))) = NumberBird n := by
+      rw [← thm24_successor, hP]
+    rw [h2]
+    rw [ih]
+    by_cases h : n % 2 = 0
+    · simp [h]
+      have h' : ¬ ((n + 1) % 2 = 0) := by omega
+      simp [h']
+      rw [h𝓝.1]
+    · simp [h]
+      have h' : ((n + 1) % 2 = 0) := by omega
+      simp [h']
+      rw [h𝓝.2]
+
+
+#eval var_eliminate "g" (var_eliminate "n" (var_eliminate "m" (
+  "Z" * "n" * "f" * ("Z" * "m" * "t" * ("g" * ("P" * "n") * ("P" * "m")))
+)))
+-- prints:
+/-
+  S * (K * (S * (S * (K * S) * (S * (K * K) * (S * Z * (K * f))))))
+  * (S * (K * (S * (K * (S * (S * Z * (K * t))))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+  * (S * (K * (S * (K * K))) * (S * (S * (K * S) * K) * (K * P))))) * (K * (K * P))))
+-/
+
+-- "Is greater than" bird - preparatory lemma
+theorem thm24_9_1 (Z P t f : Bird) :
+    ∃ g : Bird, ∀ n m : Nat,
+    g * NumberBird n * NumberBird m =
+    Z * (NumberBird n) * f * (Z * (NumberBird m) * t *
+    (g * (P * (NumberBird n)) * (P * (NumberBird m)))) := by
+  let K := forest.K; let hK := forest.hK
+  let S := forest.S; let hS := forest.hS
+  let Θ := forest.Θ; let hΘ := forest.hΘ
+  let A₁ := S * (K * (S * (S * (K * S) * (S * (K * K) * (S * Z * (K * f))))))
+  * (S * (K * (S * (K * (S * (S * Z * (K * t))))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S)))
+  * (S * (K * (S * (K * K))) * (S * (S * (K * S) * K) * (K * P))))) * (K * (K * P))))
+  use Θ * A₁
+  intro n m
+  rw [SageBird] at hΘ
+  specialize hΘ A₁ (Θ * A₁) rfl
+  rw [FondOf] at hΘ
+  nth_rw 1 [← hΘ]
+  dsimp [A₁]
+  nth_rw 1 [hS, hK, hS, hS, hK, hS, hS, hK, hK, hS, hS, hK, hK, hS, hK,
+    hS, hS, hS, hS, hK, hK, hS, hS, hK, hS, hK, hS, hS, hK, hS, hK,
+    hK, hS, hS, hK, hS, hK, hK, hK, hK]
+
+-- Existence of "Is greater than" bird
+theorem thm24_9_2 :
+    ∃ g : Bird, ∀ n m : Nat,
+    g * NumberBird n * NumberBird m = (if n > m then t else f) := by
+  obtain ⟨P, hP⟩ := @thm24_2 Bird forest
+  obtain ⟨Z, hZ⟩ := @thm24_3 Bird forest
+  obtain ⟨g, hg⟩ := @thm24_9_1 Bird forest Z P t f
+  use g
+  intro n m
+  induction n generalizing m with
+  | zero =>
+    specialize hg 0 m
+    nth_rw 1 [hg]
+    have h1 : Z * NumberBird 0 = t := by
+      apply (hZ 0).1
+      rfl
+    rw [h1, ht']
+    simp
+  | succ n ih =>
+    specialize hg (n + 1) m
+    rw [hg]
+    have h1 : Z * NumberBird (n + 1) = f := by
+      apply (hZ (n + 1)).2
+      rw [Nat.add_one]
+      omega
+    rw [h1, hf']
+    cases m with
+    | zero =>
+      have h0 : Z * NumberBird 0 = t := by
+        apply (hZ 0).1
+        rfl
+      simp [h0]
+      rw [ht']
+    | succ m =>
+      have h0 : Z * NumberBird (m + 1) = f := by
+        apply (hZ (m + 1)).2
+        omega
+      rw [h0, hf']
+      have h2 : ((P * NumberBird (n + 1))) = NumberBird n := by
+        rw [← thm24_successor, hP]
+      have h3 : ((P * NumberBird (m + 1))) = NumberBird m := by
+        rw [← thm24_successor, hP]
+      rw [h2, h3]
+      specialize ih m
+      rw [ih]
+      simp
+
+
+def Relational (A : Bird) : Prop :=
+  ∀ n m : Nat,
+  A * NumberBird n * NumberBird m = t ∨ A * NumberBird n * NumberBird m = f
+
+def RelationalRegular (A : Bird) : Prop :=
+  Relational A ∧
+  ∀ n : Nat, ∃ m : Nat,
+  A * NumberBird n * NumberBird m = t
+
+def MinimizerOf (A' A : Bird) : Prop :=
+  ∀ n : Nat, ∃ k : Nat,
+  A' * NumberBird n = NumberBird k ∧
+  A * NumberBird n * NumberBird k = t ∧
+  ∀ j : Nat,
+  (A * NumberBird n * NumberBird j = t) → k ≤ j
+
+
+#eval var_eliminate "A₁" (var_eliminate "n" (var_eliminate "m" (
+  "A" * "n" * "m" * "m" * ("A₁" * "n" * ("σ" * "m"))
+)))
+-- prints:
+/-
+  S * (K * (S * (S * (K * S) * (S * (S * (K * S) * A) * (K * I)))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S))) * (S * (K * K)))) * (K * (K * σ)))
+-/
+
+-- A₁ bird - preparatory lemma
+theorem thm24_10_1 (A σ : Bird) :
+    ∃ A₁ : Bird, ∀ n m : Nat,
+    A₁ * NumberBird n * NumberBird m =
+    A * (NumberBird n) * (NumberBird m) * (NumberBird m) *
+    (A₁ * (NumberBird n) * (σ * (NumberBird m))) := by
+  let K := forest.K; let hK := forest.hK
+  let S := forest.S; let hS := forest.hS
+  let Θ := forest.Θ; let hΘ := forest.hΘ
+  let A₁ := S * (K * (S * (S * (K * S) * (S * (S * (K * S) * A) * (K * I)))))
+  * (S * (S * (K * S) * (S * (K * (S * (K * S))) * (S * (K * K)))) * (K * (K * σ)))
+  use Θ * A₁
+  intro n m
+  rw [SageBird] at hΘ
+  specialize hΘ A₁ (Θ * A₁) rfl
+  rw [FondOf] at hΘ
+  nth_rw 1 [← hΘ]
+  dsimp [A₁]
+  nth_rw 1 [hS, hK, hS, hS, hK, hS, hS, hK, hS, hK, hS, hS, hS, hK,
+    hS, hS, hK, hS, hK, hS, hS, hK, hK, hK, hK, forest.hI]
+
+-- Existence of A₁ for any A
+theorem thm24_10_2 (A : Bird) :
+    ∃ A₁ : Bird, ∀ n m : Nat,
+    (A * NumberBird n * NumberBird m = f →
+      A₁ * NumberBird n * NumberBird m = A₁ * NumberBird n * (V * f * NumberBird m))
+      ∧
+    (A * NumberBird n * NumberBird m = t →
+      A₁ * NumberBird n * NumberBird m = NumberBird m) := by
+  let σ : Bird := V * f
+  have hσ : Successor σ := thm24_successor
+  obtain ⟨A₁, hA₁⟩ := @thm24_10_1 Bird forest A σ
+  use A₁
+  unfold σ at hσ
+  intro n m
+  constructor
+  · intro hA
+    rw [hσ]
+    specialize hA₁ n m
+    rw [hA₁, hA, hf', hσ]
+  · intro hA
+    rw [hA₁, hA, ht']
 
 
 
-
-
-
-
-
-
+-- Existence of a Minimizer bird A' for any regular relational A
+open Classical in
+theorem thm24_10 (A : Bird) (hreg : RelationalRegular A) :
+    ∃ A' : Bird, MinimizerOf A' A := by
+  let C := forest.C; let hC := forest.hC
+  let n0 : Bird := NumberBird 0
+  obtain ⟨A₁, hA₁⟩ := thm24_10_2 A
+  use C * A₁ * n0
+  have hreg1 : Relational A := hreg.1
+  have hreg2 : ∀ n : ℕ, ∃ m : ℕ, A * NumberBird n * NumberBird m = t := hreg.2
+  intro n
+  rw [hC]
+  specialize hreg2 n
+  let k : Nat := Nat.find hreg2
+  have k_good := Nat.find_spec hreg2
+  use k
+  unfold n0
+  constructor
+  · have h : ∀ k' < k, A₁ * NumberBird n * NumberBird k' =
+      A₁ * NumberBird n * (NumberBird (k' + 1)) := by
+        intro k' hk'
+        have h0 : ¬ (A * NumberBird n * NumberBird k' = t) := by
+          apply Nat.find_min hreg2 hk'
+        rw [Relational] at hreg1
+        specialize hreg1 n k'
+        have h1 : A * NumberBird n * NumberBird k' = f := by
+          apply hreg1.resolve_left h0
+        specialize hA₁ n k'
+        rw [thm24_successor] at hA₁
+        apply hA₁.1
+        exact h1
+    have h_ind : ∀ j : Nat, (A * NumberBird n * NumberBird k = t ∧
+        ∀ k' < j, A₁ * NumberBird n * NumberBird k' =
+        A₁ * NumberBird n * (NumberBird (k' + 1))) →
+        A₁ * NumberBird n * NumberBird 0 = A₁ * NumberBird n * NumberBird j := by
+      intro k
+      induction k with
+      | zero =>
+        intro _
+        rfl
+      | succ k ih =>
+        intro h2
+        have h_prev : ∀ k' < k, A₁ * NumberBird n * NumberBird k' =
+            A₁ * NumberBird n * NumberBird (k' + 1) :=
+          fun k' hk' => h2.2 k' (Nat.lt_succ_of_lt hk')
+        specialize ih ⟨h2.1, h_prev⟩
+        have h_step : A₁ * NumberBird n * NumberBird k
+            = A₁ * NumberBird n * NumberBird (k + 1) :=   by
+          apply h2.2 k
+          omega
+        rw [← h_step]
+        exact ih
+    specialize h_ind k ⟨k_good, h⟩
+    rw [h_ind]
+    apply (hA₁ n k).2
+    exact k_good
+  · constructor
+    · exact k_good
+    · intro j hj
+      have k_min : k ≤ j := Nat.find_min' hreg2 hj
+      exact k_min
 
 
 
