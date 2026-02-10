@@ -13,6 +13,7 @@ def IsFalse (x : Bird) [forest : Forest Bird] : Prop :=
   ∀ K I : Bird, Kestrel K → Identity I → x = K * I
 
 class LogicalForest (Bird : Type) extends Forest Bird where
+  hnontrivial : NonTrivial toForest
   /- Combinatorial birds -/
   /-
       K and S are enough, but assuming
@@ -22,6 +23,7 @@ class LogicalForest (Bird : Type) extends Forest Bird where
   K : Bird
   S : Bird
   I : Bird
+  B : Bird
   V : Bird
   R : Bird
   T : Bird
@@ -30,6 +32,7 @@ class LogicalForest (Bird : Type) extends Forest Bird where
   hK : Kestrel K
   hS : Starling S
   hI : Identity I
+  hB : Bluebird B
   hV : Vireo V
   hR : Robin R
   hT : Thrush T

@@ -543,18 +543,21 @@ def Relational (A : Bird) : Prop :=
   ∀ n m : Nat,
   A * NumberBird n * NumberBird m = t ∨ A * NumberBird n * NumberBird m = f
 
-def RelationalRegular (A : Bird) : Prop :=
-  Relational A ∧
+def Regular (A : Bird) : Prop :=
   ∀ n : Nat, ∃ m : Nat,
   A * NumberBird n * NumberBird m = t
 
-def MinimizerOf (A' A : Bird) : Prop :=
+def MinimizerOf_old (A' A : Bird) : Prop :=
   ∀ n : Nat, ∃ k : Nat,
   A' * NumberBird n = NumberBird k ∧
   A * NumberBird n * NumberBird k = t ∧
   ∀ j : Nat,
   (A * NumberBird n * NumberBird j = t) → k ≤ j
 
+open Classical in
+def MinimizerOf (A' A : Bird) (hreg : Regular A) : Prop :=
+  ∀ n : ℕ,
+  A' * NumberBird n = NumberBird (Nat.find (hreg n))
 
 #eval var_eliminate "A₁" (var_eliminate "n" (var_eliminate "m" (
   "A" * "n" * "m" * "m" * ("A₁" * "n" * ("σ" * "m"))
@@ -612,14 +615,12 @@ theorem thm24_10_2 (A : Bird) :
 
 -- Existence of a Minimizer bird A' for any regular relational A
 open Classical in
-theorem thm24_10 (A : Bird) (hreg : RelationalRegular A) :
-    ∃ A' : Bird, MinimizerOf A' A := by
+theorem thm24_10_old (A : Bird) (hreg1 : Relational A) (hreg2 : Regular A) :
+    ∃ A' : Bird, MinimizerOf_old A' A := by
   let C := forest.C; let hC := forest.hC
   let n0 : Bird := NumberBird 0
   obtain ⟨A₁, hA₁⟩ := thm24_10_2 A
   use C * A₁ * n0
-  have hreg1 : Relational A := hreg.1
-  have hreg2 : ∀ n : ℕ, ∃ m : ℕ, A * NumberBird n * NumberBird m = t := hreg.2
   intro n
   rw [hC]
   specialize hreg2 n
@@ -671,6 +672,156 @@ theorem thm24_10 (A : Bird) (hreg : RelationalRegular A) :
     · intro j hj
       have k_min : k ≤ j := Nat.find_min' hreg2 hj
       exact k_min
+
+
+-- Existence of a Minimizer bird A' for any regular relational A
+open Classical in
+theorem thm24_10 (A : Bird) (hreg1 : Relational A) (hreg2 : Regular A) :
+    ∃ A' : Bird, MinimizerOf A' A hreg2 := by
+  let C := forest.C; let hC := forest.hC
+  let n0 : Bird := NumberBird 0
+  obtain ⟨A₁, hA₁⟩ := thm24_10_2 A
+  use C * A₁ * n0
+  intro n
+  rw [hC]
+  specialize hreg2 n
+  let k : Nat := Nat.find hreg2
+  have k_good := Nat.find_spec hreg2
+  have h : ∀ k' < k, A₁ * NumberBird n * NumberBird k' =
+    A₁ * NumberBird n * (NumberBird (k' + 1)) := by
+      intro k' hk'
+      have h0 : ¬ (A * NumberBird n * NumberBird k' = t) := by
+        apply Nat.find_min hreg2 hk'
+      rw [Relational] at hreg1
+      specialize hreg1 n k'
+      have h1 : A * NumberBird n * NumberBird k' = f := by
+        apply hreg1.resolve_left h0
+      specialize hA₁ n k'
+      rw [thm24_successor] at hA₁
+      apply hA₁.1
+      exact h1
+  have h_ind : ∀ j : Nat, (A * NumberBird n * NumberBird k = t ∧
+      ∀ k' < j, A₁ * NumberBird n * NumberBird k' =
+      A₁ * NumberBird n * (NumberBird (k' + 1))) →
+      A₁ * NumberBird n * NumberBird 0 = A₁ * NumberBird n * NumberBird j := by
+    intro k
+    induction k with
+    | zero =>
+      intro _
+      rfl
+    | succ k ih =>
+      intro h2
+      have h_prev : ∀ k' < k, A₁ * NumberBird n * NumberBird k' =
+          A₁ * NumberBird n * NumberBird (k' + 1) :=
+        fun k' hk' => h2.2 k' (Nat.lt_succ_of_lt hk')
+      specialize ih ⟨h2.1, h_prev⟩
+      have h_step : A₁ * NumberBird n * NumberBird k
+          = A₁ * NumberBird n * NumberBird (k + 1) :=   by
+        apply h2.2 k
+        omega
+      rw [← h_step]
+      exact ih
+  specialize h_ind k ⟨k_good, h⟩
+  rw [h_ind]
+  apply (hA₁ n k).2
+  exact k_good
+
+
+-- Length function and its well-posedness
+theorem thm24_11_bound (n : ℕ) : 10^n > n := by
+  induction n with
+  | zero =>
+    -- Base case: 0 < 10^0
+    simp
+  | succ k ih =>
+    -- Inductive step: show k + 1 < 10^(k + 1)
+    calc
+      k + 1 ≤ 10^k := by
+        -- Since 10^k > k, and they are naturals, 10^k >= k+1
+        -- Except for cases where 10^k is very small (but 10^k is at least 1)
+        exact ih -- (Actually, ih is k < 10^k, which implies k + 1 <= 10^k)
+      _ < 10 * 10^k := by
+        -- 10^k < 10 * 10^k is true because 10^k >= 1
+        omega
+      _ = 10^(k + 1) := by
+        apply Eq.symm
+        rw [Nat.pow_add_one]
+        omega
+
+theorem thm24_11_exist (n : ℕ) : ∃ k : ℕ, 10^k > n := by
+  use n
+  exact thm24_11_bound n
+
+def LengthFunction (n : ℕ) : ℕ :=
+  Nat.find (thm24_11_exist n)
+
+def LengthBird (ℓ : Bird) : Prop :=
+  ∀ n : ℕ, ℓ * NumberBird n = NumberBird (LengthFunction n)
+
+-- Existence of a "length measurer" bird
+open Classical in
+theorem thm24_11 :
+    ∃ ℓ : Bird, LengthBird ℓ := by
+  obtain ⟨g, hg⟩ := @thm24_9_2 Bird forest
+  obtain ⟨ExpBird, hExpBird⟩ := @thm24_7_2 Bird forest
+  let B := forest.B; let hB := forest.hB
+  let C := forest.C; let hC := forest.hC
+  let A := C * (B * g * (ExpBird * NumberBird 10))
+  have h1 : ∀ n m : ℕ, 10 ^ n > m ↔ A * NumberBird m * NumberBird n = t := by
+    intro n m  --hnm
+    constructor
+    · intro hnm
+      unfold A
+      rw [hC, hB, hExpBird, hg]
+      simp [hnm]
+    · intro hA
+      rw [hC, hB, hExpBird, hg] at hA
+      by_contra hneg
+      rw [if_neg hneg] at hA
+      unfold f t at hA
+      let K := forest.K; let hK := forest.hK
+      let I := forest.I; let hI := forest.hI
+      rw [ht K hK] at hA
+      rw [hf K I hK hI] at hA
+      apply thm22_6 K I hK forest.hnontrivial
+      exact hA
+  have h2 : ∀ n m : ℕ, ¬ 10 ^ n > m → A * NumberBird m  * NumberBird n = f := by
+    intro n m hnm
+    rw [hC, hB, hExpBird, hg]
+    simp [hnm]
+  have hreg1 : Relational A := by
+    rw [Relational]
+    intro n m
+    by_cases h_case : 10 ^ m > n
+    constructor
+    · apply (h1 m n).1 h_case
+    · right
+      apply h2 m n h_case
+  have hreg2 : Regular A := by
+    rw [Regular]
+    intro n
+    obtain ⟨k, hk⟩ := thm24_11_exist n
+    use k
+    specialize h1 k n
+    tauto
+  obtain ⟨ℓ, hℓ⟩ := @thm24_10 Bird forest A hreg1 hreg2
+  use ℓ
+  rw [LengthBird]
+  rw [MinimizerOf] at hℓ
+  intro n
+  specialize hℓ n
+  rw [LengthFunction]
+  have h_equiv : ∀ k, 10^k > n ↔ A * NumberBird n * NumberBird k = t := by
+    intro k
+    exact h1 k n
+  rw [hℓ]
+  congr 1
+  obtain ⟨k, hk⟩ := hreg2 n
+  apply Nat.find_congr hk
+  intro n1 hn1
+  specialize h1 n1 n
+  apply Iff.symm
+  exact h1
 
 
 
