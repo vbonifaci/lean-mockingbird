@@ -6,18 +6,27 @@ namespace SmullyanMockingbird
 
 variable {Bird : Type}
 
+/-
+  With respect to the book, we slightly strengthen the definitions of IsTrue and IsFalse
+  instead of requiring x = K for a *particular* K, or x = K * I for *particular* K and I,
+  as otherwise we would need additional assumptions (e.g., extensionality) to conclude
+  that some bird equals t or f (the forest might contain multiple kestrels or identities)
+-/
+
 def IsTrue (x : Bird) [forest : Forest Bird] : Prop :=
   ∀ K : Bird, Kestrel K → x = K
 
 def IsFalse (x : Bird) [forest : Forest Bird] : Prop :=
   ∀ K I : Bird, Kestrel K → Identity I → x = K * I
 
+
 class LogicalForest (Bird : Type) extends Forest Bird where
+  /- Nontriviality assumption (at least two distinct birds in the forest) -/
   hnontrivial : NonTrivial toForest
   /- Combinatorial birds -/
   /-
       K and S are enough, but assuming
-      a few more will be useful.
+      a few more will be handy.
       Naming them will be useful for the next chapter
   -/
   K : Bird
@@ -49,22 +58,19 @@ class LogicalForest (Bird : Type) extends Forest Bird where
 
 variable [forest : LogicalForest Bird]
 
--- Direct rewriting rule for t
+-- Direct rewriting rule for t: t is a Kestrel
 theorem ht' :
     Kestrel forest.t := by
   rw [Kestrel]
   intro x y
-  --obtain ⟨K, hK⟩ := forest.hK
   let K := forest.K; let hK := forest.hK
   rw [forest.ht K, hK]
   exact hK
 
--- Direct rewriting rule for f
+-- Direct rewriting rule for f: f * y is an Identity for any y
 theorem hf' :
     ∀ y : Bird, Identity (forest.f * y) := by
   intro x y
-  --obtain ⟨K, hK⟩ := forest.hK
-  --obtain ⟨I, hI⟩ := forest.hI
   let K := forest.K; let hK := forest.hK
   let I := forest.I; let hI := forest.hI
   rw [forest.hf K I hK hI, hK, hI]
@@ -78,13 +84,9 @@ abbrev hf := forest.hf
 
 
 
--- Negation bird
+-- Existence of a Negation bird
 theorem thm23_1 :
-    --(ht : IsTrue t) (hf : IsFalse f) :
     ∃ 𝓝 : Bird, 𝓝 * t = f ∧ 𝓝 * f = t := by
-  --obtain ⟨K, hK⟩ := forest.hK
-  --obtain ⟨I, hI⟩ := forest.hI
-  --obtain ⟨V, hV⟩ := forest.hV
   let K := forest.K; let hK := forest.hK
   let I := forest.I; let hI := forest.hI
   let V := forest.V; let hV := forest.hV
@@ -94,14 +96,10 @@ theorem thm23_1 :
   · rw [hV, hf']
 
 
--- Conjunction bird
+-- Existence of a Conjunction bird
 theorem thm23_2 :
-    --(ht : IsTrue t) (hf : IsFalse f) :
     ∃ c : Bird, c * t * t = t ∧ c * f * t = f ∧
                 c * t * f = f ∧ c * f * f = f := by
-  --obtain ⟨K, hK⟩ := forest.hK
-  --obtain ⟨I, hI⟩ := forest.hI
-  --obtain ⟨R, hR⟩ := forest.hR
   let K := forest.K; let hK := forest.hK
   let I := forest.I; let hI := forest.hI
   let R := forest.R; let hR := forest.hR
@@ -114,14 +112,10 @@ theorem thm23_2 :
       · rw [hR, ht']
       · rw [hR, hf']
 
--- Disjunction bird
+-- Existence of a Disjunction bird
 theorem thm23_3 :
-    -- (ht : IsTrue t) (hf : IsFalse f) :
     ∃ d : Bird, d * t * t = t ∧ d * f * t = t ∧
                 d * t * f = t ∧ d * f * f = f := by
-  --obtain ⟨K, hK⟩ := forest.hK
-  --obtain ⟨I, hI⟩ := forest.hI
-  --obtain ⟨T, hT⟩ := forest.hT
   let K := forest.K; let hK := forest.hK
   let I := forest.I; let hI := forest.hI
   let T := forest.T; let hT := forest.hT
@@ -134,14 +128,10 @@ theorem thm23_3 :
       · rw [hT, ht']
       · rw [hT, hf']
 
--- If-then bird
+-- Existence of a If-then bird
 theorem thm23_4 :
-    --(ht : IsTrue t) (hf : IsFalse f) :
     ∃ i : Bird, i * t * t = t ∧ i * f * t = t ∧
                 i * t * f = f ∧ i * f * f = t := by
-  --obtain ⟨K, hK⟩ := forest.hK
-  --obtain ⟨I, hI⟩ := forest.hI
-  --obtain ⟨R, hR⟩ := forest.hR
   let K := forest.K; let hK := forest.hK
   let I := forest.I; let hI := forest.hI
   let R := forest.R; let hR := forest.hR
@@ -154,15 +144,10 @@ theorem thm23_4 :
       · rw [hR, ht']
       · rw [hR, hf']
 
--- If-and-only-if bird
+-- Existence of a If-and-only-if bird
 theorem thm23_5 :
-    -- (ht : IsTrue t) (hf : IsFalse f) :
     ∃ i : Bird, i * t * t = t ∧ i * f * t = f ∧
                 i * t * f = f ∧ i * f * f = t := by
-  --obtain ⟨K, hK⟩ := forest.hK
-  --obtain ⟨I, hI⟩ := forest.hI
-  --obtain ⟨C, hC⟩ := forest.hC
-  --obtain ⟨S, hS⟩ := forest.hS
   let K := forest.K; let hK := forest.hK
   let I := forest.I; let hI := forest.hI
   let S := forest.S; let hS := forest.hS
