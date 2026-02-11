@@ -88,6 +88,20 @@ theorem thm25_1 :
     dsimp
 
 
+def Normalizer (Δ : Bird) : Prop :=
+  ∀ n : ℕ, Δ * NumberBird n = NumberBird (ConcatFunction n (GoedelNumber n))
+
+-- Existence of a Normalizer bird
+theorem thm25_2 :
+    ∃ Δ : Bird, Normalizer Δ := by
+  let S := forest.S; let hS := forest.hS
+  obtain ⟨Cat, hCat⟩ := @thm24_12 Bird forest
+  obtain ⟨δ, hδ⟩ := @thm25_1 Bird forest
+  use S * Cat * δ
+  intro n
+  rw [hS, hδ, hCat]
+
+
 
 
 end SmullyanMockingbird
